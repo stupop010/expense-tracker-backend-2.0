@@ -1,9 +1,7 @@
 import { Sequelize } from "sequelize";
 import "dotenv/config";
 
-const sequelize = new Sequelize(
-  `mysql://${process.env.DB_USER}:${process.env.DB_PASS}@localhost:3306/expense`
-);
+const sequelize = new Sequelize(process.env.CLEARDB_DATABASE_URL);
 
 const models = {
   User: sequelize.import("./user"),
