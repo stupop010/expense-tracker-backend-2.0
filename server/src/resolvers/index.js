@@ -21,9 +21,9 @@ const resolvers = {
     },
 
     async findExpense(parent, { id }, { models, user }) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
-      const userId = 1;
-      return await models.Expense.findOne({ where: { id, userId } });
+      if (!user) throw new ForbiddenError("Not authenticated.");
+
+      return await models.Expense.findOne({ where: { id, userId: user.id } });
     },
 
     async findAllExpenses(parent, args, { models, user }) {
@@ -94,6 +94,7 @@ const resolvers = {
 
     async editExpense(parent, { name, id }, { models, user }) {
       // if (!user) throw new ForbiddenError("Not authenticated.");
+      console.log("hello");
       const expense = await models.Expense.findOne({
         where: {
           id,
@@ -112,14 +113,13 @@ const resolvers = {
     },
 
     async deleteExpense(parent, { id }, { models, user }) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
-      // return await models.Expense.destroy({
-      //   where: {
-      //     id,
-      //     userId: user.id,
-      //   },
-      // });
-      console.log(id);
+      if (!user) throw new ForbiddenError("Not authenticated.");
+      return await models.Expense.destroy({
+        where: {
+          id,
+          userId: user.id,
+        },
+      });
     },
   },
 };
