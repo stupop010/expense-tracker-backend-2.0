@@ -92,20 +92,27 @@ const resolvers = {
       return expense;
     },
 
-    async editExpense(parent, { name, id }, { models, user }) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
-      console.log("hello");
+    async editExpense(
+      parent,
+      { name, id, desc, price, category },
+      { models, user }
+    ) {
+      if (!user) throw new ForbiddenError("Not authenticated.");
+
       const expense = await models.Expense.findOne({
         where: {
           id,
-          // TODO change userId to = user.id
-          userId: 1,
+
+          userId: user.id,
         },
       });
 
       const updateData = {};
 
       if (name) updateData.name = name;
+      if (desc) updateData.desc = desc;
+      if (price) updateData.desc = price;
+      if (category) updateData.desc = category;
 
       expense.update(updateData);
 

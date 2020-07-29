@@ -41,7 +41,15 @@ const typeDefs = gql`
       price: String!
       category: String!
     ): Expense!
-    editExpense(name: String, id: Int!): Expense!
+
+    editExpense(
+      name: String
+      id: Int!
+      desc: String!
+      price: String!
+      category: String!
+    ): Expense!
+
     deleteExpense(id: Int!): Boolean!
   }
 `;
