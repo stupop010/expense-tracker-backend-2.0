@@ -4,6 +4,7 @@ import {
   ForbiddenError,
 } from "apollo-server";
 import "dotenv/config";
+import moment from "moment";
 
 import { createToken } from "../utils/jwt";
 
@@ -27,8 +28,45 @@ const resolvers = {
     },
 
     async findAllExpenses(parent, args, { models, user }) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
+      if (!user) throw new ForbiddenError("Not authenticated.");
       return await models.Expense.findAll();
+    },
+
+    async searchDates(parent, { dates }, { models, user }) {
+      if (!user) throw new ForbiddenError("Not authenticated.");
+      const Op = models.Sequelize.Op;
+
+      // Dates are sent as a string not a array
+      const dateSplit = dates.split(",");
+
+      if (dateSplit.length === 1) {
+        // Sequelize is currently querying the day before the argument
+        // Its querying at 23:00. Added 24 hour
+        // query will be prev day at 23:00 and current day at 23:00
+        const day = moment(dateSplit[0]).add(24, "h").toISOString();
+        const expenses = await models.Expense.findAll({
+          where: {
+            createdAt: {
+              [Op.between]: [moment(dateSplit[0]).toISOString(), day],
+            },
+          },
+        });
+
+        return expenses;
+      }
+
+      const expenses = await models.Expense.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [
+              moment(dateSplit[0]).toISOString(),
+              moment(dateSplit[1]).toISOString(),
+            ],
+          },
+        },
+      });
+
+      return expenses;
     },
   },
 

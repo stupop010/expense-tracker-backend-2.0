@@ -28,6 +28,8 @@ const typeDefs = gql`
 
     findExpense(id: Int!): Expense
     findAllExpenses: [Expense]
+
+    searchDates(dates: String!): [Expense]
   }
 
   type Mutation {
