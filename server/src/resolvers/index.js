@@ -13,8 +13,7 @@ const resolvers = {
     async user(parent, args, { models, user }) {
       if (!user) throw new ForbiddenError("Not authenticated.");
 
-      const u = await models.User.findOne({ where: { id: user.id } });
-      return u;
+      return await models.User.findOne({ where: { id: user.id } });
     },
     async getAllUsers(parent, args, { models, user }) {
       // if (!user) throw new ForbiddenError("Not authenticated.");
@@ -27,7 +26,7 @@ const resolvers = {
       return await models.Expense.findOne({ where: { id, userId: user.id } });
     },
 
-    async findAllExpenses(parent, args, { models, user }) {
+    async findThisYearExpenses(parent, args, { models, user }) {
       if (!user) throw new ForbiddenError("Not authenticated.");
       return await models.Expense.findAll();
     },
@@ -36,37 +35,67 @@ const resolvers = {
       if (!user) throw new ForbiddenError("Not authenticated.");
       const Op = models.Sequelize.Op;
 
+      // Switch based on which query. Today, Yesterday, Last Month, This Year
+      switch (dates) {
+        case "Today":
+          const today = moment().format("YYYY-MM-DD");
+          return await models.Expense.findAll({
+            where: {
+              createdAt: {
+                [Op.substring]: today,
+              },
+            },
+          });
+
+        case "Yesterday":
+          const yesterday = moment().subtract(1, "day").format("YYYY-MM-DD");
+          return await models.Expense.findAll({
+            where: {
+              createdAt: {
+                [Op.substring]: yesterday,
+              },
+            },
+          });
+
+        case "Last Month":
+          const lastMonth = moment().subtract(1, "month").format("YYYY-MM");
+          return await models.Expense.findAll({
+            where: {
+              createdAt: {
+                [Op.substring]: lastMonth,
+              },
+            },
+          });
+        default:
+          break;
+      }
+
       // Dates are sent as a string not a array
       const dateSplit = dates.split(",");
 
+      // If dateSplit === 1, argument was only a custom date
       if (dateSplit.length === 1) {
-        // Sequelize is currently querying the day before the argument
-        // Its querying at 23:00. Added 24 hour
-        // query will be prev day at 23:00 and current day at 23:00
-        const day = moment(dateSplit[0]).add(24, "h").toISOString();
-        const expenses = await models.Expense.findAll({
+        const customDay = moment(dateSplit[0]).format("YYYY-MM-DD");
+
+        return await models.Expense.findAll({
           where: {
             createdAt: {
-              [Op.between]: [moment(dateSplit[0]).toISOString(), day],
+              [Op.substring]: customDay,
             },
           },
         });
-
-        return expenses;
-      }
-
-      const expenses = await models.Expense.findAll({
-        where: {
-          createdAt: {
-            [Op.between]: [
-              moment(dateSplit[0]).toISOString(),
-              moment(dateSplit[1]).toISOString(),
-            ],
+      } else {
+        return await models.Expense.findAll({
+          where: {
+            createdAt: {
+              [Op.between]: [
+                moment(dateSplit[0]).toISOString(),
+                moment(dateSplit[1]).toISOString(),
+              ],
+            },
           },
-        },
-      });
-
-      return expenses;
+        });
+      }
     },
   },
 

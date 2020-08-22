@@ -27,7 +27,7 @@ const typeDefs = gql`
     getAllUsers: [User]
 
     findExpense(id: Int!): Expense
-    findAllExpenses: [Expense]
+    findThisYearExpenses: [Expense]
 
     searchDates(dates: String!): [Expense]
   }
