@@ -36,7 +36,18 @@ const resolvers = {
       const Op = models.Sequelize.Op;
 
       // Switch based on which query. Today, Yesterday, Last Month, This Year
+      console.log(dates);
       switch (dates) {
+        case "This Year":
+          const thisYear = moment().format("YYYY");
+          console.log(thisYear);
+          return await models.Expense.findAll({
+            where: {
+              createdAt: {
+                [Op.substring]: thisYear,
+              },
+            },
+          });
         case "Today":
           const today = moment().format("YYYY-MM-DD");
           return await models.Expense.findAll({
@@ -133,7 +144,7 @@ const resolvers = {
     },
 
     async deleteUser(parent, { id }, { models, user }) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
+      if (!user) throw new ForbiddenError("Not authenticated.");
       return await models.User.destroy({
         where: {
           id,
@@ -146,7 +157,7 @@ const resolvers = {
       { name, desc, price, category },
       { models, user }
     ) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
+      if (!user) throw new ForbiddenError("Not authenticated.");
 
       const expense = await models.Expense.create({
         name,
