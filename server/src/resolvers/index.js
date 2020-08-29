@@ -3,8 +3,11 @@ import {
   UserInputError,
   ForbiddenError,
 } from "apollo-server";
-import "dotenv/config";
+const { GraphQLScalarType } = require("graphql");
+const { Kind } = require("graphql/language");
 import moment from "moment";
+
+import "dotenv/config";
 
 import { createToken } from "../utils/jwt";
 
@@ -16,7 +19,7 @@ const resolvers = {
       return await models.User.findOne({ where: { id: user.id } });
     },
     async getAllUsers(parent, args, { models, user }) {
-      // if (!user) throw new ForbiddenError("Not authenticated.");
+      if (!user) throw new ForbiddenError("Not authenticated.");
       return await models.User.findAll();
     },
 
@@ -28,7 +31,17 @@ const resolvers = {
 
     async findThisYearExpenses(parent, args, { models, user }) {
       if (!user) throw new ForbiddenError("Not authenticated.");
-      return await models.Expense.findAll();
+      const Op = models.Sequelize.Op;
+      const thisYear = moment().format("YYYY");
+
+      return await models.Expense.findAll({
+        where: {
+          createdAt: {
+            [Op.substring]: thisYear,
+          },
+          userId: user.id,
+        },
+      });
     },
 
     async searchDates(parent, { dates }, { models, user }) {
@@ -36,16 +49,16 @@ const resolvers = {
       const Op = models.Sequelize.Op;
 
       // Switch based on which query. Today, Yesterday, Last Month, This Year
-      console.log(dates);
       switch (dates) {
         case "This Year":
           const thisYear = moment().format("YYYY");
-          console.log(thisYear);
+
           return await models.Expense.findAll({
             where: {
               createdAt: {
                 [Op.substring]: thisYear,
               },
+              userId: user.id,
             },
           });
         case "Today":
@@ -55,6 +68,7 @@ const resolvers = {
               createdAt: {
                 [Op.substring]: today,
               },
+              userId: user.id,
             },
           });
 
@@ -65,6 +79,7 @@ const resolvers = {
               createdAt: {
                 [Op.substring]: yesterday,
               },
+              userId: user.id,
             },
           });
 
@@ -75,6 +90,7 @@ const resolvers = {
               createdAt: {
                 [Op.substring]: lastMonth,
               },
+              userId: user.id,
             },
           });
         default:
@@ -207,6 +223,23 @@ const resolvers = {
       });
     },
   },
+
+  Date: new GraphQLScalarType({
+    name: "Date",
+    description: "Date custom scalar type",
+    parseValue(value) {
+      return moment(value).toISOString();
+    },
+    serialize(value) {
+      return moment(value).format("YYYY-MM-DD");
+    },
+    parseLiteral(ast) {
+      if (ast.kind === Kind.String) {
+        return moment(ast.value); // ast value is always in string format
+      }
+      return null;
+    },
+  }),
 };
 
 export default resolvers;
