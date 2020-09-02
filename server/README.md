@@ -4,7 +4,7 @@ A app to keep track of all your expenses.
 
 The Front-end is developed with react/apollo and material-ui, implemented d3 for data visualization.
 
-The backend is build with express/apollo. Json web token for auth.
+The backend is build with express/apollo/mySQL. Json web token for auth.
 
 Graphql for data querying.
 
